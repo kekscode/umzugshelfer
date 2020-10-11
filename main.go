@@ -3,15 +3,26 @@ package main
 import (
 	"log"
 	"net"
+	"net/http"
 	"os"
 
 	"github.com/cloudflare/cloudflare-go"
 )
 
 func main() {
+
+	// If a bind address like 0.0.0.0:8080 or the like is given, we start in
+	// server mode
+	if len(os.Args) == 2 {
+		bindAddr := os.Args[1]
+		http.HandleFunc("/", serveIP)
+		log.Fatal(http.ListenAndServe(bindAddr, nil))
+	}
+
 	var zoneID string
 	cfAPIKey := os.Getenv("CF_API_KEY")
 	cfAPIEMail := os.Getenv("CF_API_EMAIL")
+	ipProvider := os.Getenv("UZH_PUBLIC_IP_PROVIDER")
 	dnsZone := os.Getenv("UZH_DNS_ZONE")
 	dnsNameA := os.Getenv("UZH_DNS_A_RECORD")
 
@@ -36,13 +47,13 @@ func main() {
 	}
 	currentRecord := records[0]
 
-	ip, err := FetchPublicIP()
+	ip, err := FetchPublicIP(ipProvider)
 	if err != nil {
 		log.Fatalf("Could not fetch IP address: %v", err)
 	}
 
 	if net.ParseIP(ip) == nil {
-		log.Fatalf("IP Address %s seems to be an invalid public IP Address", ip)
+		log.Fatalf("IP Address (%s) seems to be an invalid public IP Address", ip)
 	}
 	log.Printf("Found public IP address: %s", ip)
 

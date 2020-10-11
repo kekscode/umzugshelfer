@@ -6,10 +6,8 @@ import (
 )
 
 // FetchPublicIP find out the public IP address on the internet
-func FetchPublicIP() (string, error) {
-	const remote string = "https://ifconfig.me/ip"
-
-	resp, err := http.Get(remote)
+func FetchPublicIP(provider string) (string, error) {
+	resp, err := http.Get(provider)
 	if err != nil {
 		return "", err
 	}
